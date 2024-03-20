@@ -1,1 +1,1 @@
-Solution évolutive des énoncés du cours de POO2
+projet d'exercice en POO2
