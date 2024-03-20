@@ -158,6 +158,19 @@ public class Gestion {
         lex.add(ex);
         System.out.println("exemplaire créé");
         //TODO attribuer rayon
+        for (Rayon rayon : lrayon) {
+            System.out.println(rayon);
+        }
+        for (Rayon rayon : lrayon) {
+            if (rayon.getNom().equals(nomRayon)) {
+                System.out.println("Rayon trouvé : " + rayon);
+            }
+            }
+        System.out.println("entrer un rayon ");
+        String nRayon=sc.next();
+        ex.setOuvrage(objrayon);
+        System.out.println("rayon attribuer");
+
     }
 
     private void gestOuvrages() {
