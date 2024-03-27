@@ -157,19 +157,26 @@ public class Gestion {
         Exemplaire ex = new Exemplaire(mat,etat,louv.get(choix-1));
         lex.add(ex);
         System.out.println("exemplaire créé");
-        //TODO attribuer rayon
+        //TODO attribuer rayon OK
+        System.out.println("liste des rayons : ");
         for (Rayon rayon : lrayon) {
             System.out.println(rayon);
         }
-        for (Rayon rayon : lrayon) {
-            if (rayon.getNom().equals(nomRayon)) {
-                System.out.println("Rayon trouvé : " + rayon);
+        boolean check=false;
+        do {
+            System.out.println("entrer un rayon ");
+            String nouveauRayon = sc.nextLine();
+            for (Rayon rayon : lrayon) {
+                if (rayon.getCodeRayon().equals(nouveauRayon)){
+                    ex.setRayon(rayon);
+                    System.out.println("rayon attribuer");
+                    check=true;
+                }
             }
+            if (check==false){
+                System.out.println("le rayon n'existe pas");
             }
-        System.out.println("entrer un rayon ");
-        String nRayon=sc.next();
-        ex.setOuvrage(objrayon);
-        System.out.println("rayon attribuer");
+        }while (!check);
 
     }
 
