@@ -1,14 +1,16 @@
 package bibliotheque.gestion;
 
 import bibliotheque.metier.*;
-import bibliotheque.utilitaires.Utilitaire;
+import bibliotheque.utilitaires.CDFactoryBeta;
+import bibliotheque.utilitaires.DVDFactoryBeta;
+import bibliotheque.utilitaires.LivreFactoryBeta;
+import bibliotheque.utilitaires.comparators.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+
+import static bibliotheque.utilitaires.Utilitaire.choixListe;
 
 public class Gestion {
     Scanner sc = new Scanner(System.in);
@@ -82,9 +84,9 @@ public class Gestion {
     }
 
     private void menu() {
-        List options = new ArrayList<>(Arrays.asList("auteurs","ouvrages","exemplaires","rayons","lecteurs","locations","fin"));
+        List options = new ArrayList<>(Arrays.asList("auteurs","ouvrages","exemplaires","rayons","lecteurs","locations","restitution","fin"));
       do{
-        int choix = Utilitaire.choixListe(options);
+        int choix = choixListe(options);
 
             switch (choix){
                 case 1 :gestAuteurs(); break;
@@ -93,20 +95,29 @@ public class Gestion {
                 case 4 : gestRayons();break;
                 case 5 : gestLecteurs();break;
                 case 6 : gestLocations();break;
+                case 7 : gestRestitution();break;
                 default:System.exit(0);
             }
         }  while (true);
     }
 
+    private void gestRestitution() {
+        //TODO lister exemplaires en location , choisir l'un d'entre eux, enregistrer sa restitution et éventuellement changer état
+    }
+
     private void gestLocations() {
         int choix;
-        choix = Utilitaire.choixListe(lex);
-        if(lex.get(choix).enLocation()){
-            System.out.println("exemplaire en location");
-            return;
+        List<Exemplaire> lex2 = new ArrayList<>(lex);
+        Iterator<Exemplaire> itlex2 = lex2.iterator();
+        while(itlex2.hasNext()){
+            if(itlex2.next().enLocation()) itlex2.remove();
         }
-        Exemplaire ex = lex.get(choix-1);
-        choix=Utilitaire.choixListe(llect);
+        lex2.sort(new ExemplaireMatriculeComparator());
+        choix =choixListe(lex2);
+        if(choix==0)return;
+        Exemplaire ex = lex2.get(choix-1);
+        choix=choixListe(llect);
+        if(choix==0)return;
         Lecteur lec = llect.get(choix-1);
         lloc.add(new Location(lec,ex));
     }
@@ -143,8 +154,23 @@ public class Gestion {
         System.out.println("genre ");
         String genre=sc.next();
         Rayon r = new Rayon(code,genre);
-        lrayon.add(r);
         System.out.println("rayon créé");
+        lrayon.add(r);
+        List<Exemplaire>  lex2= new ArrayList<>(lex);
+        Iterator<Exemplaire> itLex2 = lex2.iterator();
+        while(itLex2.hasNext()){
+            Rayon ract = itLex2.next().getRayon();
+            if(r.equals(ract)) itLex2.remove();
+        }
+        lex2.sort(new ExemplaireTitreComparator());
+        do {
+            int choix = choixListe(lex2);
+            if(choix==0) break;
+            r.addExemplaire(lex.get(choix - 1));
+            System.out.println("exemplaire ajouté");
+            lex2.remove(choix-1);
+        }
+        while(true);
     }
 
     private void gestExemplaires() {
@@ -153,35 +179,18 @@ public class Gestion {
         System.out.println("etat  ");
         String etat=sc.next();
         System.out.println("ouvrage ");
-        int choix = Utilitaire.choixListe(louv);
+        int choix = choixListe(louv);
         Exemplaire ex = new Exemplaire(mat,etat,louv.get(choix-1));
         lex.add(ex);
         System.out.println("exemplaire créé");
-        //TODO attribuer rayon OK
-        System.out.println("liste des rayons : ");
-        for (Rayon rayon : lrayon) {
-            System.out.println(rayon);
-        }
-        boolean check=false;
-        do {
-            System.out.println("entrer un rayon ");
-            String nouveauRayon = sc.nextLine();
-            for (Rayon rayon : lrayon) {
-                if (rayon.getCodeRayon().equals(nouveauRayon)){
-                    ex.setRayon(rayon);
-                    System.out.println("rayon attribuer");
-                    check=true;
-                }
-            }
-            if (check==false){
-                System.out.println("le rayon n'existe pas");
-            }
-        }while (!check);
-
-    }
+        lrayon.sort(new RayonComparator());
+        choix = choixListe(lrayon);
+        if(choix==0) return;
+        ex.setRayon(lrayon.get(choix-1));
+           }
 
     private void gestOuvrages() {
-        Ouvrage o = null;
+      /*  Ouvrage o = null;
         System.out.println("titre");
         String titre= sc.nextLine();
         System.out.println("age minimum");
@@ -218,7 +227,7 @@ public class Gestion {
                 case 2 :
                             System.out.println("code : ");
                             long code= sc.nextLong();
-                            System.out.println("nombre de pages :");
+                            System.out.println("nombre de plages :");
                             byte nbrePlages= sc.nextByte();
                             LocalTime dureeTotale = Utilitaire.lecTime();
                             o=new CD(titre,ageMin,dp,ploc,langue,genre,code,nbrePlages,dureeTotale);
@@ -243,10 +252,39 @@ public class Gestion {
                              ((DVD)o).getSousTitres().add(langues.get(choix-1));//TODO vérifier unicité ou utiliser set
                              }while(true);
                             ;break;
-            }
-           louv.add(o);
+            }*/
+
+
+
+        TypeOuvrage[] tto = TypeOuvrage.values();
+        List<TypeOuvrage> lto = new ArrayList<>(Arrays.asList(tto));
+        int choix = choixListe(lto);
+        if(choix==0) return;
+        Ouvrage o = null;
+
+     switch(choix) {
+            case 1 : o = new LivreFactoryBeta().create();break;
+            case 2 : o = new CDFactoryBeta().create();break;
+            case 3 : o = new DVDFactoryBeta().create();break;
+        }
+       /* List<OuvrageFactory> lof = new ArrayList<>(Arrays.asList(new LivreFactory(),new CDFactory(),new DVDFactory()));
+        o = lof.get(choix-1).create();*/
+        louv.add(o);
         System.out.println("ouvrage créé");
-        //TODO ajouter 1 auteur à la liste des auteurs
+        List<Auteur> laut2 = new ArrayList<>(laut);
+        Iterator<Auteur> itlaut = laut2.iterator();
+        while(itlaut.hasNext()){
+            if(o.getLauteurs().contains(itlaut.next())) itlaut.remove();
+        }
+        laut2.sort(new AuteurComparator());
+        do {
+            choix = choixListe(laut2);
+            if(choix==0) break;
+            o.addAuteur(laut2.get(choix - 1));
+            laut2.remove(choix-1);
+            System.out.println("auteur ajouté");
+        }while(true);
+
     }
 
        private void gestAuteurs() {
@@ -259,6 +297,21 @@ public class Gestion {
         Auteur a  = new Auteur(nom,prenom,nat);
         laut.add(a);
         System.out.println("écrivain créé");
+
+        List<Ouvrage> lo2 = new ArrayList<>(louv);
+        Iterator<Ouvrage> itlo2 = lo2.iterator();
+        while(itlo2.hasNext()){
+            if(a.getLouvrage().contains(itlo2.next())) itlo2.remove();
+        }
+        lo2.sort(new OuvrageComparator());
+        do {
+            int choix = choixListe(lo2);
+            if (choix == 0) break;
+            a.addOuvrage(lo2.get(choix - 1));
+            System.out.println("ouvrage ajouté");
+            lo2.remove(choix - 1);
+        }
+        while(true);
     }
 
     public static void main(String[] args) {
